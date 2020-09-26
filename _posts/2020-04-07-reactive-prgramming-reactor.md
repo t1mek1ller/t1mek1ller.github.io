@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 用Reactor进行反应式编程
+title: 使用Reactor进行反应式编程
 description: "reactive programming with reactor"
 modified: 2020-04-07
 tags: [Reactor]
@@ -298,7 +298,7 @@ reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of 
 从上面输出日志可以看到，`Flux.interval`仍然按照既定速率生产数字0~11，但是消费者只消费了数字0和数字11，其他数字都被丢弃了。
 
 
-### Scheduler线程调度
+### Scheduler反应式线程模型
 默认情况下，Reactor是并发无关的，意思是作用在`Flux`和`Mono`上的操作符执行的线程是延用调用链上前一个算子所执行的线程。所以，没有任何处理的情况下，同一个流的所有操作都是在`subscribe`调用线程上执行的。这样的好处是用户在subscribe的时候不需要考虑并发的问题，将并发的决策权交给用户。
 
 Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`SubscribeOn`。
@@ -386,6 +386,13 @@ Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`Subscri
 
 此时`addPrefix`已经在多个线程中分别执行了，特别注意的是，main中的subscribe所在线程沿用了`addPrefix`所在线程。
 
+
+## 总结
+反应式编程的提出主要是为了解决异步编程的复杂性，是一种对并发和并行的更高抽象（通过数据流和函数式），让开发者从传统命令式编程复杂状态交互逻辑中解放出来。
+
+对于习惯了命令式编程的我们来说，一开始学习函数式编程或者反应式编程来说可能有陡峭的学习曲线，主要原因还是束缚于命令式的惯性思维，需要一定时间的思维转化。
+
+实际上，反应式编程编写出来的程序更加优雅、直观，值得我们尝试用反应式编程解决工作中遇到的问题。
 
 ## 参考文献
 1. [The introduction to Reactive Programming you've been missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
