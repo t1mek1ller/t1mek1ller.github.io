@@ -23,6 +23,20 @@ categories: [Reactor, Reactive Programming]
 
 最后，反应式编程中**反应**的另一层意思是变化传播，整个系统可以快速检测到问题并作出即时的响应，动态调整资源以适应变化的系统负载。
 
+## 反应式编程历史
+Rx.NET作者Erik Meijer在给《RxJava反应式编程》一书的序中说到：
+
+> 我们要专注于发明一种简单的编程模型，用于构建大规模异步和数据密集型的互联网服务架构。
+
+因此，在2009年，时任微软架构师的Erik开发了Rx.Net。2012年开源并制定了Reactive Extension(也被称之为ReactiveX)，可以将Rx移植到其他语言中。
+
+同年，从微软跳槽到Netflix的Jafar Husain说服了当时负责Netflix API的Ben Christensen采用Rx编程，并因此开发了RxJava并开源。正是这一举动使得Rx在Java世界中大放异彩。有意思的是，这三位大佬现在都在Facebook工作。
+
+特别的，虽然RxJava最初是用做Netflix后端API项目中，但是其在前端Android开发中也得到了广泛使用，基于数据流的反应式编程非常适合客户端各种事件响应以及复杂的网络交互的场景。
+
+2015年，Spring团队决定基于Reactive Stream API和Java8重新开发一个JVM上的反应式编程库，称为Reactor，主要解决后端微服务场景下各种复杂的异步网络交互，并将其集成到了Srping 5中，这一举措更是助推了反应式编程在后端领域的流行。
+
+
 
 ## 为什么要进行反应式编程？
 [反应式宣言](https://www.reactivemanifesto.org/)中给出了反应式系统的整个架构如下：
@@ -50,7 +64,7 @@ categories: [Reactor, Reactive Programming]
 ## 如何进行反应式编程？
 有很多反应式编程库帮助开发者可以快速进行反应式编程，比如RxJava、Reactor。
 
-David Karnok作为反应式编程大师，参与了RxJava和Reactor库的设计，给出了Reactive库的[代际发展](http://akarnokd.blogspot.com/2016/03/operator-fusion-part-1.html)：
+David Karnok作为RxJava项目的leader，给出了Reactive库的[代际发展](http://akarnokd.blogspot.com/2016/03/operator-fusion-part-1.html)：
 
 * 第0代，JDK中的`java.util.Observable`API和基于callback（`addXXXListener`）API。这些API是典型的观察者模式，很难使用且不可组合。
 
@@ -299,7 +313,7 @@ reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of 
 
 
 ### Scheduler反应式线程模型
-默认情况下，Reactor是并发无关的，意思是作用在`Flux`和`Mono`上的操作符执行的线程是延用调用链上前一个算子所执行的线程。所以，没有任何处理的情况下，同一个流的所有操作都是在`subscribe`调用线程上执行的。这样的好处是用户在subscribe的时候不需要考虑并发的问题，将并发的决策权交给用户。
+默认情况下，Reactor是并发无关的，意思是作用在`Flux`和`Mono`上的操作符执行的线程是延用调用链上前一个操作符所执行的线程。所以，没有任何处理的情况下，同一个流的所有操作都是在`subscribe`调用线程上执行的。这样的好处是用户在subscribe的时候不需要考虑并发的问题，将并发的决策权交给用户。
 
 Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`SubscribeOn`。
 
