@@ -196,7 +196,7 @@ public class FastThreadLocalThread extends Thread {
 {% endhighlight %}
 
 
-为什么InternalThreadLocalMap中的数组没有用弱引用？Netty实现了FastThreadLocalRunnable重写了Runnable方法，在run方法的finally快中调用了`FastThreadLocal.removeAll`来清理所有的数据，实现如下：
+为什么InternalThreadLocalMap中的数组没有用弱引用？Netty实现了FastThreadLocalRunnable重写了Runnable方法，在run方法的finally块中调用了`FastThreadLocal.removeAll`来清理所有的数据，实现如下：
 
 {% highlight Java %}
 final class FastThreadLocalRunnable implements Runnable {
