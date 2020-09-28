@@ -83,7 +83,7 @@ David Karnok作为RxJava项目的leader，给出了Reactive库的[代际发展](
 
 * **Publisher**，发布者，可以发布无限序列的消息，可以根据订阅者的需求push消息，在任意时间点都可以动态服务多个订阅者，其接口如下：
 
-{% highlight Java %}
+```java
 public interface Publisher<T> {
 
     /**
@@ -95,13 +95,12 @@ public interface Publisher<T> {
      */
     public void subscribe(Subscriber<? super T> s);
 }
-{% endhighlight %}
-
+```
 
 
 * **Subscriber**，订阅者，消费发布者发布的消息，可以进行订阅、消费消息、接收完成、接收错误等动作，其接口如下：
 
-{% highlight Java %}
+```java
 public interface Subscriber<T> {
 
     /**
@@ -126,11 +125,11 @@ public interface Subscriber<T> {
      */
     public void onComplete();
 }
-{% endhighlight %}
+```
 
 * **Subscription**，表示一个订阅者订阅发布者的上下文，用于控制数据交换，可以请求或者取消数据交换，其接口如下：
 
-{% highlight Java %}
+```java
 public interface Subscription {
 
     /**
@@ -145,13 +144,14 @@ public interface Subscription {
      */ 
     public void cancel();
 }
-{% endhighlight %}
+```
 
 * **Processor**，表示发布者和订阅者之间数据处理的阶段，可以看成是发布者和订阅者之间的管道，其接口如下：
-{% highlight Java %}
+
+```java
 public interface Processor<T, R> extends Subscriber<T>, Publisher<R> {
 }
-{% endhighlight %}
+```
 
 
 ## Reactor是什么？
@@ -201,54 +201,54 @@ Reactor中的大多数操作符都已经内置了回压的功能，所以基本�
 
 Reactor中的回压机制的一个例子如下：
 
-{% highlight Java %}
-    public static void log(Object o) {
-        System.out.println(
-                "[" + Thread.currentThread().getName() + "]\t| "
-                +  o);
-    }
+```java
+public static void log(Object o) {
+    System.out.println(
+            "[" + Thread.currentThread().getName() + "]\t| "
+            +  o);
+}
 
-    @Test
-    public void testBackPressure() throws Exception{
-        
-        CountDownLatch latch = new CountDownLatch(1);
+@Test
+public void testBackPressure() throws Exception{
+    
+    CountDownLatch latch = new CountDownLatch(1);
 
-        Flux.interval(Duration.ofMillis(100))
-                .publishOn(Schedulers.parallel(), 1)
-                .subscribe(new BaseSubscriber<Long>() {
-                    @Override
-                    protected void hookOnSubscribe(Subscription subscription) {
-                        log("onSubscribe");
-                        request(1);
+    Flux.interval(Duration.ofMillis(100))
+            .publishOn(Schedulers.parallel(), 1)
+            .subscribe(new BaseSubscriber<Long>() {
+                @Override
+                protected void hookOnSubscribe(Subscription subscription) {
+                    log("onSubscribe");
+                    request(1);
+                }
+
+                @Override
+                protected void hookOnNext(Long value) {
+                    log("onNext:" + value);
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
 
-                    @Override
-                    protected void hookOnNext(Long value) {
-                        log("onNext:" + value);
+                    request(1);
+                }
 
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                @Override
+                protected void hookOnError(Throwable throwable) {
+                    throwable.printStackTrace();
+                    latch.countDown();
+                }
 
-                        request(1);
-                    }
-
-                    @Override
-                    protected void hookOnError(Throwable throwable) {
-                        throwable.printStackTrace();
-                        latch.countDown();
-                    }
-
-                    @Override
-                    protected void hookOnComplete() {
-                        latch.countDown();
-                    }
-                });
-        latch.await();
-    }
-{% endhighlight %}
+                @Override
+                protected void hookOnComplete() {
+                    latch.countDown();
+                }
+            });
+    latch.await();
+}
+```
 
 我们用` Flux.interval(Duration.ofMillis(100))`以每100ms的速率生产一个Long值，并在`BaseSubscriber.hookOnNext`中执行`Thread.sleep(1000)`以每1秒的速率消费一个Long值。
 
@@ -256,7 +256,7 @@ Reactor中的回压机制的一个例子如下：
 
 显而易见，此时消费速率跟不上生产速率。这种情况下，`interval`下会抛出异常，上面代码的输出日志如下：
 
-{% highlight Java %}
+```
 [Test worker]   | onSubscribe
 [parallel-1]    | onNext:0
 reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of requests (interval doesn't support small downstream requests that replenish slower than the ticks)
@@ -271,7 +271,7 @@ reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of 
     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
     at java.lang.Thread.run(Thread.java:748)
-{% endhighlight %}
+```
 
 从上面日志可以看到，只消费了0之后就抛出异常了。那这种情况下要如何处理呢？可能如下几种选择：
 
@@ -281,18 +281,16 @@ reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of 
 
 实际情况下，1和2都很难改变，为了让系统可以正常运行，只能选择3来保证部分可用（正如反应式宣言中的Resilient）。比如我们将上面的例子改成如下：
 
-{% highlight Java %}
-
-        Flux.interval(Duration.ofMillis(100))
-                .onBackpressureDrop(drop -> log("drop:" + drop))
-                .publishOn(Schedulers.parallel(), 1)
-                .subcribe(...)
-
-{% endhighlight %}
+```java
+Flux.interval(Duration.ofMillis(100))
+        .onBackpressureDrop(drop -> log("drop:" + drop))
+        .publishOn(Schedulers.parallel(), 1)
+        .subcribe(...)
+```
 
 添加`onBackpressureDrop`策略，丢弃多余的数据，可以使整个程序仍然可用。此时部分输出日志如下：
 
-{% highlight Java %}
+```
 [Test worker]   | onSubscribe
 [parallel-1]    | onNext:0
 [parallel-2]    | drop:1
@@ -306,8 +304,7 @@ reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of 
 [parallel-2]    | drop:9
 [parallel-2]    | drop:10
 [parallel-1]    | onNext:11
-
-{% endhighlight %}
+```
 
 从上面输出日志可以看到，`Flux.interval`仍然按照既定速率生产数字0~11，但是消费者只消费了数字0和数字11，其他数字都被丢弃了。
 
@@ -330,28 +327,28 @@ Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`Subscri
 * 不影响之后出现的`PublishOn`配置
 
 下面举一个例子说明以上原则：
-{% highlight Java %}
-    @Test
-    public void testScheduler() throws Exception{
-        CountDownLatch count = new CountDownLatch(1);
-        Scheduler s1 = Schedulers.newParallel("scheduler-A", 4);
-        Scheduler s2 = Schedulers.newParallel("scheduler-B", 4);
-        Flux.range(1, 2)
-                .map(i -> { log("mapA:" + i); return i; })
-                .subscribeOn(s1)
-                .map(i -> { log("mapB:" + i); return i; })
-                .publishOn(s2)
-                .map(i -> { log("mapC:" + i); return i; })
-                .subscribe(i->log("subscribe:" +i),
-                        t -> count.countDown(),
-                        count::countDown);
-        count.await();
-    }
-{% endhighlight %}
+```java
+@Test
+public void testScheduler() throws Exception{
+    CountDownLatch count = new CountDownLatch(1);
+    Scheduler s1 = Schedulers.newParallel("scheduler-A", 4);
+    Scheduler s2 = Schedulers.newParallel("scheduler-B", 4);
+    Flux.range(1, 2)
+            .map(i -> { log("mapA:" + i); return i; })
+            .subscribeOn(s1)
+            .map(i -> { log("mapB:" + i); return i; })
+            .publishOn(s2)
+            .map(i -> { log("mapC:" + i); return i; })
+            .subscribe(i->log("subscribe:" +i),
+                    t -> count.countDown(),
+                    count::countDown);
+    count.await();
+}
+```
 
 上面用了3个`map`输出当前执行线程，mapA和mapB之间调用`subcribeOn`指定执行线程池为scheduler-A，而在mapB和mapC之间调用`publishOn`指定线程池为scheduler-B。我们可以看到以下输出结果：
 
-{% highlight Java %}
+```
 [scheduler-A-2] | mapA:1
 [scheduler-A-2] | mapB:1
 [scheduler-A-2] | mapA:2
@@ -360,7 +357,7 @@ Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`Subscri
 [scheduler-B-1] | subscribe:1
 [scheduler-B-1] | mapC:2
 [scheduler-B-1] | subscribe:2
-{% endhighlight %}
+```
 
 从上述日志可以发现，Flux.range以及mapA和mapB都是在scheduler-A-2线程中执行的，说明`subscribeOn`的确会影响调用链上的所有算子，而和其位置无关。
 
@@ -370,33 +367,36 @@ Reactor提供了两种方法来设置执行的上下文：`PublishOn`和`Subscri
 
 那Reactor中怎样才可以使流中的元素并发执行呢？答案就是`flatMap`，这个操作符相当于转换成另一个流，我们可以在新的流中指定Scheduler，这样就可以保证元素并发处理了。如下例所示：
 
-{% highlight Java %}
-    Mono<String> addPrefix(int val) {
-        return Mono.just("prefix_" + val)
-                .doOnNext(s -> log("addPrefix:" + s));
-    }
+```java
+public Mono<String> addPrefix(int val) {
+    return Mono.just("prefix_" + val)
+            .doOnNext(s -> log("addPrefix:" + s));
+}
 
-    @Test
-    void testFlatMap() throws Exception {
-        CountDownLatch count = new CountDownLatch(1);
-        Flux.range(1, 3)
-                .flatMap(i -> addPrefix(i).subscribeOn(Schedulers.parallel()))
-                .subscribe(s -> log("main:" + s), t -> count.countDown(),
-                        count::countDown);
-        count.await();
-    }
-{% endhighlight %}
+@Test
+public void testFlatMap() throws Exception {
+    CountDownLatch count = new CountDownLatch(1);
+    Flux.range(1, 3)
+            .flatMap(i -> addPrefix(i)
+                .subscribeOn(Schedulers.parallel()))
+            .subscribe(
+                s -> log("main:" + s), 
+                t -> count.countDown(),
+                count::countDown);
+    count.await();
+}
+```
 
 假设我们有一个`addPrefix`函数为每个数字添加一个前缀，方法返回一个Mono表示延迟执行这个计算，这里只是举例用，实际情况下`addPrefix`可能是一个耗时操作。接下来，通过`Flux.range`生成3个整型值，并在`flatMap`中调用`addPrefix`，指定新流所在的Scheduler。我们可以看到如下输出：
 
-{% highlight Java %}
+```
 [parallel-2]    | addPrefix:prefix_2
 [parallel-3]    | addPrefix:prefix_3
 [parallel-1]    | addPrefix:prefix_1
 [parallel-2]    | main:prefix_2
 [parallel-3]    | main:prefix_1
 [parallel-3]    | main:prefix_3
-{% endhighlight %}
+```
 
 此时`addPrefix`已经在多个线程中分别执行了，特别注意的是，main中的subscribe所在线程沿用了`addPrefix`所在线程。
 
