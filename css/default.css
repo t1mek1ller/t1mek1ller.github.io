@@ -14,7 +14,7 @@ div.main {
 }
 
 H1, H2, H3, H4 {
-  font-family: Courier, monospace, "Palatino Linotype", "Book Antiqua", Palatino, Helvetica, STKaiti, SimSun, serif; 
+  font-family: Futura, Courier, "Palatino Linotype", "Book Antiqua", Palatino, , STKaiti, SimSun, serif; 
   width: 98%;
   line-height: 150%;
   color: #666666;
@@ -39,7 +39,7 @@ blockquote {
 }
 
 pre {
-  font-family: Inconsolata, Consolas, "DEJA VU SANS MONO", "DROID SANS MONO", Proggy, monospace;
+  font-family: Consolas, "DEJA VU SANS MONO", "DROID SANS MONO", Proggy, monospace;
   border: solid 1px #ddd;
   border-radius: 3px;
   background-color: #f8f8ff;
@@ -50,7 +50,7 @@ pre {
 }
 
 code {
-  font-family: Inconsolata, Consolas, "DEJA VU SANS MONO", "DROID SANS MONO", Proggy, monospace;
+  font-family: Consolas, "DEJA VU SANS MONO", "DROID SANS MONO", Proggy, monospace;
   font-size: 0.75em;
   border: solid 1px #ddd;
   border-radius: 3px;

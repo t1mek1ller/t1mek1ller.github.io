@@ -1,10 +1,16 @@
 ---
 layout: page
-title: About me
+title: ABOUT ME
 description: 
 keywords: me
 permalink: /about/
 ---
+
+
+{% capture images %}
+    /images/j.png
+{% endcapture %}
+{% include gallery images=images cols=1 %}
 
 > Don't walk in front of me, I may not follow.
 >
