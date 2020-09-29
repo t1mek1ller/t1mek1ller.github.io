@@ -58,7 +58,7 @@ API作为软件系统的门面，是软件系统思维模型的直接体现，�
 
 上面两个模型后面会详细介绍，我们以server端为例看下Netty的实现方式：
 
-{% highlight Java %}
+```java
 // 配置连接事件的reactor线程
 EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 
@@ -92,7 +92,7 @@ try {
     bossGroup.shutdownGracefully();
     workerGroup.shutdownGracefully();
 }
-{% endhighlight %}
+```
 
 
 ## Channel, ChannelFuture
@@ -151,7 +151,7 @@ Netty的数据流由下图所示：
 
 我们注意到`ChannelPipeline`在添加`ChannelHandler`时有如下两个接口：
 
-{% highlight Java %}
+```java
     /**
      * Appends a {@link ChannelHandler} at the last position of this pipeline.
      *
@@ -179,7 +179,7 @@ Netty的数据流由下图所示：
      *         if the specified handler is {@code null}
      */
     ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler);
-{% endhighlight %}
+```
 
 这两个接口的不同之处在于，第二个接口指定了`ChannelHandler`执行的线程池`EventExecutorGroup`。默认情况下，`ChannelHandler`的处理操作是在I/O线程中执行的，但是如果`ChannelHandler`中有耗时的阻塞操作，就需要指定专有线程池以免阻塞I/O线程。
 
@@ -201,12 +201,12 @@ Netty的数据流由下图所示：
 一个`EventLoop`对应一个`Thread`，上面也说到，一个`EventLoop`可以服务（注册）多个`Channel`，这得益于NIO的`Selector`接口进行I/O多路复用。
 
 注意到`EventLoop`有如下接口：
-{% highlight Java %}
+```java
     /**
      * Calls {@link #inEventLoop(Thread)} with {@link Thread#currentThread()} as argument
      */
     boolean inEventLoop();
-{% endhighlight %}
+```
 
 这个接口揭示了`EventLoop`的执行逻辑：任务的执行必须在本线程中执行，否则会添加至任务队列之中。
 

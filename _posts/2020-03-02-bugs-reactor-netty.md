@@ -20,7 +20,7 @@ categories: [Bugs, Reactor]
 
 第一，是业务后端恢复之后的错误日志，所有新进来的请求都在报`PoolAcquireTimeoutException`异常，异常栈如下：
 
-{% highlight Java %}
+```text
 e:reactor.netty.internal.shaded.reactor.pool.PoolAcquireTimeoutException: 
 Pool#acquire(Duration) has been pending for more than the configured timeout of 45000ms
 
@@ -29,7 +29,7 @@ at reactor.core.scheduler.SchedulerTask.call(SchedulerTask.java:68)
 at reactor.core.scheduler.SchedulerTask.call(SchedulerTask.java:28)
 at java.util.concurrent.FutureTask.run(FutureTask.java:266)
 ...
-{% endhighlight %}
+```
 
 这个异常官方文档解释如下：
 
@@ -41,16 +41,16 @@ at java.util.concurrent.FutureTask.run(FutureTask.java:266)
 
  * `ReadTimeoutException`意思是读取超时，表示从服务端获取响应超过了设定的时间。这个错误说明服务端压力过大或者网络异常，来不及响应。
 
-{% highlight Java %}
+```text
 WARN  [reactor-http-epoll-92] r.n.h.c.HttpClientConnect - 
 [id: 0xae4ffbc3, L:/localhost:54344 - R:xxxxxx/xxxxxx:80] The connection observed an error
 io.netty.handler.timeout.ReadTimeoutException: null
-{% endhighlight %}
+```
 
 
 *  `ConnectTimeoutException`意思是连接超时，表示建立TCP连接超过了设定的时间，这个错误也说明服务端压力过大或者网络异常，来不及响应
 
-{% highlight Java %}
+```text
 e:io.netty.channel.ConnectTimeoutException: 
 connection timed out: L:/localhost:54344 - R:xxxxxx/xxxxxx:80
 
@@ -64,15 +64,15 @@ at io.netty.util.concurrent.SingleThreadEventExecutor$5.run(SingleThreadEventExe
 at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
 at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 at java.lang.Thread.run(Thread.java:745)
-{% endhighlight %}
+```
 
 * `PrematureCloseException`意思是连接被永久关闭，具体错误信息表示在等待数据响应的时候连接被关闭。这个错误是在服务器响应阶段造成的，可能是服务端压力过大异常关闭了连接。
 
-{% highlight Java %}
+```text
 WARN  [][reactor-http-epoll-66] r.n.h.c.HttpClientConnect - 
 [id: 0xae4ffbc3, L:/localhost:54344 - R:xxxxxx/xxxxxx:80] The connection observed an error
 reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response
-{% endhighlight %}
+```
 
 
 业务后端出现故障的时间点的错误日志均说明服务端当时压力过大，但是为什么服务端恢复之后，客户端仍然在报`PoolAcquireTimeoutException`的原因不得而知。
@@ -80,30 +80,30 @@ reactor.netty.http.client.PrematureCloseException: Connection prematurely closed
 
 接下来介绍下项目中所用的Spring的WebClient。WebClient本身并没有实现http请求的相关逻辑，其底层是采用的是[reactor-netty](https://github.com/reactor/reactor-netty)的http客户端（也是这次问题的始作俑者），WebClient只是对其做了一个封装。reactor-netty是基于netty并结合reactor模型实现的tcp/udp/http异步库。线上运行的`reactor-netty`的版本如下：
 
-{% highlight Java %}
+```text
 <dependency>
     <groupId>io.projectreactor.netty</groupId>
     <artifactId>reactor-netty</artifactId>
     <version>0.9.1.RELEASE</version>
 </dependency>
-{% endhighlight %}
+```
 
 最后是项目的运行环境：
 
 * jvm
 
-{% highlight Java %}
+```text
 java version "1.8.0_101"
 Java(TM) SE Runtime Environment (build 1.8.0_101-b13)
 Java HotSpot(TM) 64-Bit Server VM (build 25.101-b13, mixed mode)
-{% endhighlight %}
+```
 
 
 * os
 
-{% highlight Java %}
+```text
 Linux 3.10.0-693.21.1.el7.x86_64 #1 SMP Wed Mar 7 19:03:37 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux
-{% endhighlight %}
+```
 
 
 
@@ -140,7 +140,8 @@ reactor-netty中也实现了http连接池，其支持弹性（elastic）的和�
 我们可以在测试环境中开启DEBUG日志，先分析下reactor-netty中一次正常的http请求过程，是如何进行连接的获取、完成http请求、归还连接的。可以在日志中grep连接channel的id来筛选出与连接有关的日志帮助分析。
 
 * 一次正常的http请求的完整的debug日志如下所示：
-{% highlight Java %}
+
+```text
 
 连接获取阶段，从连接池中获取一个连接
 2020-02-27 15:53:35,518 DEBUG [][reactor-http-epoll-5] r.n.r.PooledConnectionProvider -
@@ -188,7 +189,7 @@ Releasing channel
 [id: 0x6305c6cf, L:/172.17.0.6:36764 - R:10.39.10.28/10.39.10.28:8080] 
 Channel cleaned, now 495 active connections and 5 inactive connections
 
-{% endhighlight %}
+```
 
 从上面日志可以看出，如果采用连接池的话，一个完整的成功的http请求会经历如下阶段:
 
@@ -201,7 +202,7 @@ Channel cleaned, now 495 active connections and 5 inactive connections
 
 * 而造成连接泄漏的http请求日志如下所示：
 
-{% highlight Java %}
+```text
 
 连接获取阶段，从连接池中获取一个连接
 2020-02-27 15:53:36,701 DEBUG [][reactor-http-epoll-5] r.n.r.PooledConnectionProvider - 
@@ -237,7 +238,7 @@ channel=[id: 0x6305c6cf, L:/172.17.0.6:36764 ! R:10.39.10.28/10.39.10.28:8080]}}
 [id: 0x6305c6cf, L:/172.17.0.6:36764 ! R:10.39.10.28/10.39.10.28:8080] 
 The connection observed an error
 reactor.netty.http.client.PrematureCloseException: Connection prematurely closed BEFORE response
-{% endhighlight %}
+```
 
 从上面日志可以看出由于连接异常关闭导致http响应未完成，然后抛出`PrematureCloseException`错误，跳过了`连接释放`阶段，没有归还连接。
 
@@ -247,7 +248,7 @@ reactor.netty.http.client.PrematureCloseException: Connection prematurely closed
 ### 代码分析
 issue中的开源库作者提到，代码中有注册hook机制，每当channel被关闭时，hook会进行连接的释放操作，操作完成后会打印`Channel closed`的日志，这个效果和`Channel cleaned`是一样的。可以看下这段hook代码：
 
-{% highlight Java %}
+```java
 void registerClose(PooledRef<PooledConnection> pooledRef, InstrumentedPool<PooledConnection> pool) {
 	Channel channel = pooledRef.poolable().channel;
 	if (log.isDebugEnabled()) {
@@ -265,7 +266,7 @@ void registerClose(PooledRef<PooledConnection> pooledRef, InstrumentedPool<Poole
 	                 }
 	             }));
 }
-{% endhighlight %}
+```
 
 这里的`channel`是netty中表示的一个tcp的连接，可以在其关闭用的`ChannelFuture`中注册回调函数。`pooledRef.invalidate()`其实就是进行执行真正的连接释放操作。
 
@@ -294,7 +295,7 @@ reactor-netty的连接池主要包括三大结构，分别是Pending Queue(等�
 
 了解完reactor-netty连接池的大致原理后，我们再看下代码级别的连接获取和释放过程，连接获取的关键函数是下面的`drainLoop`函数：
 
-{% highlight Java %}
+```java
 for (;;) {
    // 空闲连接数
     int availableCount = elements.size();
@@ -342,7 +343,7 @@ for (;;) {
 
 ...
 }
-{% endhighlight %}
+```
 
 通过上述代码可以看出，Allocation Strategy中的permit控制着真实的连接数目。
 
@@ -350,7 +351,7 @@ for (;;) {
 
 首先看下`poolRef.release()`方法：
 
-{% highlight Java %}
+```java
  public Mono<Void> release() {
      return Mono.defer(() -> {
         // 已经释放过的不必再释放
@@ -391,7 +392,7 @@ Mono<Void> destroyPoolable(AbstractPooledRef<POOLABLE> ref) {
     ...
 }
 
-{% endhighlight %}
+```
 
 从`poolRef.release()`的实现中，我们可以知道每一个`PoolRef`实例会维护一个`STATE`状态，有3种状态：
 
@@ -408,7 +409,7 @@ Mono<Void> destroyPoolable(AbstractPooledRef<POOLABLE> ref) {
 
 我们再看下上文提到的hook机制，它在channel关闭的时候会调用`poolRef.invalidate()`, 这个函数和`poolRef.release()`并没有什么不同，可以看下它的实现：
 
-{% highlight Java %}
+```java
 public Mono<Void> invalidate() {
     return Mono.defer(() -> {
         if (markInvalidate()) {
@@ -425,7 +426,7 @@ public Mono<Void> invalidate() {
 boolean markInvalidate() {
     return STATE.compareAndSet(this, STATE_ACQUIRED, STATE_RELEASED);
 }
-{% endhighlight %}
+```
 
 函数先检查一下当前的状态是否是`STATE_ACQUIRED`，如果是的话，更新成STATE_ACQUIRED状态再进行连接清理，清理过程和`release`中提到的一样，最终都会调用`pool.destroyPoolable()`方法进行释放和清理。
 
@@ -447,9 +448,10 @@ boolean markInvalidate() {
 泄漏的`PoolRef`最终的`state`值居然是1，也就是`STATE_ACQUIRED`，让人完全大跌眼镜！如果是`STATE_ACQUIRED`的话，最终应该是要被清理掉然后更新成`STATE_RELEASED`。而map中其他正常被释放的`PoolRef`也的确都是`STATE_RELEASED`状态。说明这些处于`STATE_ACQUIRED`状态的`PoolRef`是没有被清理回收过的。
 
 另外，我在`poolRef.invalidate()`调用前后获取其状态，并在回调中将状态信息打印了出来，结果如下：
-{% highlight Java %}
+
+```text
  Channel closed, now 150 active connections and 0 inactive connections, originState:2, invalidState:2
-{% endhighlight %}
+```
 
 诡异的现象来了：`PoolRef`调用`invalidate`前后的值都是2，也就是`STATE_RELEASED`，打断点看的时候状态是1，日志打印的状态又是2，这难道是薛定谔的状态嘛！
 
@@ -459,7 +461,7 @@ boolean markInvalidate() {
 ### 真相大白
 这种现象其实还有一种合理解释，就是hook中的`PoolRef`和最终要被释放的`PoolRef`不是同一个。上面分析过，每次归还连接的时候是新构造一个`PoolRef`加入到空闲连接队列中，那意味着每次获取的`PoolRef`实例是不一样的，但其底层包装的`channel`其实是同一个。那么`channel`注册hook的时候，传递进去的`PoolRef`是哪一个呢？看代码：
 
-{% highlight Java %}
+```java
 PooledConnection pooledConnection = pooledRef.poolable();
 Channel c = pooledConnection.channel;
 
@@ -490,7 +492,8 @@ if (current instanceof PendingConnectionObserver) {
 else if (current == null) {
 		registerClose(pooledRef, pool);
 }
-{% endhighlight %}
+
+```
 
 从上面代码可以知道，channel在第一次被aquire之后会设置OWNER，后面不会在进行hook的注册，所以hook中的`PoolRef`是第一次对chanenel包装的实例。而这个`PoolRef`如果经过了正常的http请求响应，是会被正常调用`poolRef.release()`进行连接释放的。所以就会出现上面日志中hook前后都显示`STATE_RELEASED`状态。而最后一次遇到连接中断问题的`PoolRef`却没有真正被释放，从而导致了连接泄漏的现象。
 
@@ -498,7 +501,7 @@ else if (current == null) {
 ## 修复
 知道了根本原因，修复就比较简单了，在[原issue](https://github.com/reactor/reactor-netty/issues/1012)上贴了我的分析，作者也非常效率了提了一个[PR](https://github.com/reactor/reactor-netty/pull/1017)，改动如下：
 
-{% highlight Java %}
+```java
 void registerClose(PooledRef<PooledConnection> pooledRef, InstrumentedPool<PooledConnection> pool) {
 	Channel channel = pooledRef.poolable().channel;
 	if (log.isDebugEnabled()) {
@@ -517,7 +520,7 @@ void registerClose(PooledRef<PooledConnection> pooledRef, InstrumentedPool<Poole
 	                    }
 	                }));
 }
-{% endhighlight %}
+```
 
 改动很小，就是从channel中的OWNER属性中取出最新的`PoolRef`进行`invalidate`操作，清理并归还连接至连接池中。
 

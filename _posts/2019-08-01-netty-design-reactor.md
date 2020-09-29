@@ -93,7 +93,8 @@ Netty关于I/O事件处理的设计思想其本质就是Reactor模式，采用�
 * **EventExecutorGroup**，每个处理器可以指定其专有线程池，相当于上面的Worker Thread
 
 我们可以看一下用Netty实现的一个简单的EchoServer
-{% highlight Java %}
+
+```java
 // Configure the server.
 EventLoopGroup bossGroup = new NioEventLoopGroup(1);
 EventLoopGroup workerGroup = new NioEventLoopGroup(8);
@@ -120,7 +121,7 @@ try {
     bossGroup.shutdownGracefully();
     workerGroup.shutdownGracefully();
 }
-{% endhighlight %}
+```
 
 * `bossGroup`是初始化的Main Reactor线程，一般只用设置一个线程，因为接收新的连接没有额外的处理逻辑
 

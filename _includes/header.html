@@ -8,12 +8,11 @@
         <title>{% if page.title %} {{ page.title }} {% else %} {{ site.title }} {% endif %} </title>
         <link rel="stylesheet" href="{{ site.url }}/css/default.css" type="text/css" />
         <link rel="stylesheet" href="{{ site.url }}/css/small.css" type="text/css" media="(max-width: 720px)"/>
-        <link rel="stylesheet" href="{{ site.url }}/css/syntax.css" type="text/css" />
+        <!-- <link rel="stylesheet" href="{{ site.url }}/css/syntax.css" type="text/css" /> -->
         <link rel="shortcut icon" href="{{ site.url }}/favicon.ico" type="image/x-icon" />
         <link rel="stylesheet" href="{{ site.url }}/css/highlight.css">
-        <script src="//cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
         <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.2/highlight.min.js"></script>
-        <script>hljs.initHighlightingOnLoad();</script>
+        <script>hljs.initHighlightingOnLoad();hljs.configure({languages: ['java','text']})</script>
         <script type="text/javascript" async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
 </script>
     </head>

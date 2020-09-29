@@ -36,7 +36,7 @@ FileChannel是`java.nio`包中对操作系统文件I/O系统调用的封装。
 
 * `FileChannel.write`和`FileChannel.read`相当于Linux的pwrite和pread系统调用，通过ByteBuffer将用户态数据精确写入到PageCache中。如果文件是顺序读写，会达到和访问内存一样的效果。另外这两个方法都是线程安全的，内部通过锁机制进行并发控制。
 
-{% highlight Java %}
+```java
     /**
      * Writes a sequence of bytes to this channel from the given buffer,
      * starting at the given file position.
@@ -49,13 +49,13 @@ FileChannel是`java.nio`包中对操作系统文件I/O系统调用的封装。
      * starting at the given file position.
      */
     public abstract int read(ByteBuffer dst, long position) throws IOException;
-{% endhighlight %}
+```
 
 
 
 
 * `FileChannel.transferTo`相当于Linux的sendfile系统调用，sendfile的效果就是传说中的零拷贝，避免用户态和核心态的数据拷贝，配合[DMA](https://en.wikipedia.org/wiki/Direct_memory_access)，可以实现将文件中的数据直接从核心态复制到网卡，从而实现高效的数据传输。但这个弊端是不能对文件中的数据进行额外的处理。
-{% highlight Java %}
+```java
     /**
      * Transfers bytes from this channel's file to the given writable byte
      * channel.
@@ -68,7 +68,7 @@ FileChannel是`java.nio`包中对操作系统文件I/O系统调用的封装。
      */
     public abstract long transferTo(long position, long count,
                                     WritableByteChannel target)
-{% endhighlight %}
+```
 
 
 

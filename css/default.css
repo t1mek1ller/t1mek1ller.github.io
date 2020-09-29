@@ -39,6 +39,11 @@ blockquote {
 }
 
 
+.box {  background-color: #CCCCCC;  width: 200px; height: 200px;  }
+.boxshadow2{ 
+  box-shadow:15px 0 15px -15px #000,
+             -15px 0 15px -15px #000;
+}
 /*
  * NOTE:
  * - The use of browser-specific styles (-moz-, -webkit-) should be avoided.
@@ -65,25 +70,29 @@ pre, code {
 }
 
 code {
-  margin: 0 0.15em;
+  /*margin: 0 0.15em;*/
   padding: 0 0.3em;
   white-space: pre-wrap;
-  border: 1px solid #EAEAEA;
+  /*border: 1px solid #EAEAEA;*/
   background-color: #F8F8F8;
-  border-radius: 3px;
+  border-radius: 6px;
   display: inline; /* added to fix Yahoo block display of inline code */
 }
 
 pre {
   font-size: 1em;
   line-height: 1.2em;
+  box-shadow:15px 0 15px -15px #000,
+             -15px 0 15px -15px #000;
+  margin: 20px;
+  /*background-color: #CCCCCC; */
 }
 
 pre code {
   white-space: pre;
   overflow: auto; /* fixes issue #70: Firefox/Thunderbird: Code blocks with horizontal scroll would have bad background colour */
-  border-radius: 5px;
-  border: 1px solid #CCC;
+  border-radius: 6px;
+  /*border: 1px solid #CCC;*/
   padding: 0.5em 0.7em;
   display: block !important; /* added to counteract the Yahoo-specific `code` rule; without this, code blocks in Blogger are broken */
 }
@@ -187,6 +196,9 @@ img {
   margin-right: auto;
   margin-bottom: 30px;
   max-width: 100%;
+/*  box-shadow:15px 0 15px -15px #000,
+             -15px 0 15px -15px #000;*/
+  /*background-color: #CCCCCC; */
 }
 
 img.emoji {
@@ -278,5 +290,9 @@ td {
 tr:nth-child(2n) {
   background-color: #f8f8f8;
 }
+
+
+
+
 
 

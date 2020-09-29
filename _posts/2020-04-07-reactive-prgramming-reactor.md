@@ -204,7 +204,8 @@ Reactor中的回压机制的一个例子如下：
 ```java
 public static void log(Object o) {
     System.out.println(
-            "[" + Thread.currentThread().getName() + "]\t| "
+            "[" + Thread.currentThread().getName() 
+            + "]\t| "
             +  o);
 }
 
@@ -214,37 +215,37 @@ public void testBackPressure() throws Exception{
     CountDownLatch latch = new CountDownLatch(1);
 
     Flux.interval(Duration.ofMillis(100))
-            .publishOn(Schedulers.parallel(), 1)
-            .subscribe(new BaseSubscriber<Long>() {
-                @Override
-                protected void hookOnSubscribe(Subscription subscription) {
-                    log("onSubscribe");
-                    request(1);
+        .publishOn(Schedulers.parallel(), 1)
+        .subscribe(new BaseSubscriber<Long>() {
+            @Override
+            protected void hookOnSubscribe(Subscription subscription) {
+                log("onSubscribe");
+                request(1);
+            }
+
+            @Override
+            protected void hookOnNext(Long value) {
+                log("onNext:" + value);
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
 
-                @Override
-                protected void hookOnNext(Long value) {
-                    log("onNext:" + value);
+                request(1);
+            }
 
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            @Override
+            protected void hookOnError(Throwable throwable) {
+                throwable.printStackTrace();
+                latch.countDown();
+            }
 
-                    request(1);
-                }
-
-                @Override
-                protected void hookOnError(Throwable throwable) {
-                    throwable.printStackTrace();
-                    latch.countDown();
-                }
-
-                @Override
-                protected void hookOnComplete() {
-                    latch.countDown();
-                }
+            @Override
+            protected void hookOnComplete() {
+                latch.countDown();
+            }
             });
     latch.await();
 }
@@ -256,7 +257,7 @@ public void testBackPressure() throws Exception{
 
 显而易见，此时消费速率跟不上生产速率。这种情况下，`interval`下会抛出异常，上面代码的输出日志如下：
 
-```
+```text
 [Test worker]   | onSubscribe
 [parallel-1]    | onNext:0
 reactor.core.Exceptions$OverflowException: Could not emit tick 1 due to lack of requests (interval doesn't support small downstream requests that replenish slower than the ticks)
@@ -290,7 +291,7 @@ Flux.interval(Duration.ofMillis(100))
 
 添加`onBackpressureDrop`策略，丢弃多余的数据，可以使整个程序仍然可用。此时部分输出日志如下：
 
-```
+```text
 [Test worker]   | onSubscribe
 [parallel-1]    | onNext:0
 [parallel-2]    | drop:1
@@ -348,7 +349,7 @@ public void testScheduler() throws Exception{
 
 上面用了3个`map`输出当前执行线程，mapA和mapB之间调用`subcribeOn`指定执行线程池为scheduler-A，而在mapB和mapC之间调用`publishOn`指定线程池为scheduler-B。我们可以看到以下输出结果：
 
-```
+```text
 [scheduler-A-2] | mapA:1
 [scheduler-A-2] | mapB:1
 [scheduler-A-2] | mapA:2
@@ -389,7 +390,7 @@ public void testFlatMap() throws Exception {
 
 假设我们有一个`addPrefix`函数为每个数字添加一个前缀，方法返回一个Mono表示延迟执行这个计算，这里只是举例用，实际情况下`addPrefix`可能是一个耗时操作。接下来，通过`Flux.range`生成3个整型值，并在`flatMap`中调用`addPrefix`，指定新流所在的Scheduler。我们可以看到如下输出：
 
-```
+```text
 [parallel-2]    | addPrefix:prefix_2
 [parallel-3]    | addPrefix:prefix_3
 [parallel-1]    | addPrefix:prefix_1
