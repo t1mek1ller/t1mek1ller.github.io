@@ -3,8 +3,8 @@ layout: post
 title: Netty设计思想之API
 description: "The Design of Netty - API"
 modified: 2019-08-01
-tags: [Reactor, Netty]
-categories: [Reactor, Netty]
+tags: [Netty]
+categories: [Netty]
 ---
 
 

@@ -30,7 +30,7 @@ collections:
     wiki:
         output: true
         permalink: /wiki/:path/
-paginate: 10
+paginate: 100
 # ---------------- #
 #      Comments    #
 # ---------------- #

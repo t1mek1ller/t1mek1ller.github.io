@@ -407,7 +407,7 @@ public void testFlatMap() throws Exception {
 
 对于习惯了命令式编程的我们来说，一开始学习函数式编程或者反应式编程来说可能有陡峭的学习曲线，主要原因还是束缚于命令式的惯性思维，需要一定时间的思维转化。
 
-实际上，反应式编程编写出来的程序更加优雅、直观，值得我们尝试用反应式编程解决工作中遇到的问题。
+实际上，反应式编程编写出来的程序更加优雅、直观(相对于用命令式编程进行并发编程来说)，值得我们尝试用反应式编程解决工作中遇到的问题。
 
 ## 参考文献
 1. [The introduction to Reactive Programming you've been missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
