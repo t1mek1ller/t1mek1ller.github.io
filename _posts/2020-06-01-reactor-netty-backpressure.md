@@ -719,9 +719,125 @@ FluxReceive会将接收到的数据放在自身的队列之中，然后调用`dr
 
 通过此种机制，可以避免读取过多的数据到内存之中。这也是第三个问题的答案。
 
+那什么时候下游的消费速度会跟不上上游的生产速度呢？
+
+可能有两种情况，一种是用户自定义操作中有耗时的操作，另一种是网络对端接收速度跟不上，我们再看下SendManyInner在onNext中接收到数据是如何处理的：
+
+
+```java
+        @Override
+        public void onNext(I t) {
+            ......
+            trySchedule();
+        }
+
+        void trySchedule() {
+            ......
+
+            try {
+                if (eventLoop.inEventLoop()) {
+                    run();
+                    return;
+                }
+                eventLoop.execute(this);
+            }
+            catch (Throwable t) {
+                ......
+            }
+        }
+
+        @Override
+        @SuppressWarnings("FutureReturnValueIgnored")
+        public void run() {
+            Queue<I> queue = this.queue;
+            try {
+                int missed = 1;
+                for (; ; ) {
+                    int r = requested;
+
+                    while (Integer.MAX_VALUE == r || r-- > 0) {
+                        I sourceMessage = queue.poll();
+
+                        ......
+
+                        int readableBytes = parent.sizeOf.applyAsInt(encodedMessage);
+
+                        ......
+
+                        pending++;
+
+                        // 写入到内部缓冲
+                        //"FutureReturnValueIgnored" this is deliberate
+                        ctx.write(encodedMessage, this);
+
+
+                        // 满足以下情况之一，则主动进行flush
+                        // 1. 指定需要flush的
+                        // 2. channel底层缓冲区已满，处于不可写状态
+                        // 3. 待写入的数据量>缓冲区剩余容量
+                        if (parent.predicate.test(sourceMessage) 
+                            || !ctx.channel().isWritable() 
+                            || readableBytes > ctx.channel().bytesBeforeUnwritable()) {
+
+                            needFlush = false;
+                            ctx.flush();
+                        }
+                        else {
+                            needFlush = true;
+                        }
+                    }
+
+                    // 异步flush情况
+                    if (needFlush && pending != 0) {
+                        needFlush = false;
+                        eventLoop.execute(asyncFlush);
+                    }
+
+                    ......
+
+                    // 决定下一次需要请求上游的量
+                    int nextRequest = this.nextRequest;
+                    if (terminalSignal == null && nextRequest != 0) {
+                        this.nextRequest = 0;
+                        s.request(nextRequest);
+                    }
+
+                    ......
+                }
+            }
+            catch (Throwable t) {
+                ......
+            }
+        }
+
+
+
+```
+所以在SendManyInner中会判断底层的写入缓冲区是否已满来决定要不要进行flush操作，默认是异步flush的，只有满足以下三种情况会进行主动flush:
+
+1. 指定需要flush的
+2. channel底层缓冲区已满，处于不可写状态
+3. 待写入的数据量>缓冲区剩余容量
+
+至此，整个反应式流及其回压机制已经梳理完毕。
+
+## 番外篇-Netty之autoRead和isWritable
+为什么Netty的autoRead参数可以控制channel的数据传输速率呢？
+
+这背后其实是利用了TCP基于滑动窗口的流量控制机制，系统socket内核有receive buffer和send buffer两个缓冲区。对于接收方，如果应用层来不及消费导致receive buffer缓冲区满的情况下，TCP会告知对端减小发送窗口大小甚至停止发送。同样的，对于发送方，如果send buffer已满，异步情况下系统调用会告知应用层发送失败。
+
+Netty通过autoRead参数来控制channel读事件的注册和移除。当autoRead打开时，会自动读取channel的数据给应用层，而当autoRead关闭时，则会移除读事件，此时TCP接收的数据会积压在receive buffer中，TCP的流控机制就会起效。
+
+Netty的isWritable则是判断底层send buffer是否已经填满，如果send buffer已经填满，则应用层应该不再写入新数据。
 
 ## 总结
-本文深入探究了Reactor Netty是如何在连接层面实现具有回压特性的反应式流。这种回压特性让系统更加具有弹性和容错性，可以应对外面变化的流量，保持高度的自治，让系统显得更加的“聪明”，而不是在大流量面前直接陷入奔溃。
+本文深入探究了Reactor Netty是如何在连接层面实现具有回压特性的反应式流，主要依赖三方面机制：
+
+1. 反应式流的request接口
+2. Netty的autoRead和isWritable参数
+3. TCP基于滑动窗口的流量控制机制
+
+这种回压特性让系统更加具有弹性和容错性，可以应对外面变化的流量，保持高度的自治，让系统显得更加的“聪明”，而不是在大流量面前直接陷入奔溃。
 
 
 
