@@ -1,6 +1,6 @@
 ---
 layout: post
-title: WebClient连接池泄漏问题分析
+title: Spring WebClient连接池泄漏问题分析
 description: "the analysis for the bug of WebClient"
 modified: 2020-03-02
 tags: [Bugs, Spring, Webclient, rector-netty, reactor-pool]

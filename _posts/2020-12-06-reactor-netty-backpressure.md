@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Reactor Netty的回压设计
+title: 反应式网络库Reactor Netty的回压设计
 description: "Backpressure in reactor-netty"
 modified: 2020-12-06
 tags: [Reactor]
