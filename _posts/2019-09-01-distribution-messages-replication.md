@@ -3,8 +3,8 @@ layout: post
 title: 分布式消息系统之多副本方案
 description: "the reliaction for distribution message systems"
 modified: 2019-09-02
-tags: [Kafka, RocketMQ, Raft, Distribution]
-categories: [Kafka, RocketMQ, Raft, Distribution]
+tags: [Kafka, RocketMQ, Raft]
+categories: [Distributed Systems]
 ---
 
 

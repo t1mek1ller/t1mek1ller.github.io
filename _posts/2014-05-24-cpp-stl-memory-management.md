@@ -4,7 +4,7 @@ title: STL之内存管理
 description: "STL之内存管理"
 modified: 2014-05-24
 tags: [C++, STL]
-categories: [C++, STL]
+categories: [C++]
 ---
 
 C++可以说由四大部分组成[1]:
@@ -25,15 +25,15 @@ STL包含六大组件[2]:
 
 其中内存管理是整个STL的基石，一般内存管理都需要考虑到小块内存造成的内存碎片问题，这通常都是通过内存池实现，预先分配一大块内存，然后再进行内存分配和回收，这样可以防止小块内存的过度申请和释放造成效率低下。STL提供了双层内存配置器，当申请的内存超过128字节时，调用第一级配置器，当小于128字节时则调用第二级配置器。C++对象的构造与析构分为两步：
 
-{% highlight C++ %}
+```C++
 class Foo {...}
 Foo *p = new Foo();//分为两步，先调用::operator new配置内存，然后调用Foo::Foo()构造对象
 delete p;//也分为两步，先调用Foo::~Foo()析构对象，然后调用::operator delete释放内存
-{% endhighlight %}
+```
 
 STL的内存配置和释放也分为两步，构造对象时先分配内存，再构造对象，析构对象时先析构对象，再释放内存。对象的构造和析构利用construct和destroy这两个函数：
 
-{% highlight C++ %}
+```C++
 template <class T1, class T2>
 inline void construct(T1* p, const T2& value)
 {
@@ -46,14 +46,14 @@ inline void destroy(T* p)
 {
     p->~T();//直接调用
 }
-{% endhighlight %}
+```
 
 这里的destroy对于POD（plain old data）型别（拥有trivil constructor/destructor/copy/assignment函数）的对象效率很低，STL会通过__type_traits判断对象是否是POD型别，若是则什么也不做。
 
 ## 第一级内存配置器
 用于分配申请内存大于128字节，其分配过程如下所示：
 
-{% highlight C++ %}
+```C++
 template <int __inst> //template 非型别参数
 class __malloc_alloc_template {
 
@@ -118,21 +118,21 @@ __malloc_alloc_template<__inst>::_S_oom_malloc(size_t __n)
         if (__result) return(__result);
     }
 }
-{% endhighlight %}
+```
 
 ## 第二级内存配置器
-而对于128字节以下的内存配置则采用更为复杂和精巧的第二级内存配置器。其主要结构是采用一个 free_list维护一大块内存，free_list维护了16种内存大小的区块，每种都为8的倍数，最小为8字节，最大为128字节。这个free_list其实并不是链表，而是一个16个元素大小的数组，数组元素类型是obj*（每个元素指向一个链表的头结点），而obj的结构如下：
+而对于128字节以下的内存配置则采用更为复杂和精巧的第二级内存配置器。其主要结构是采用一个 free_list维护一大块内存，free_list维护了16种内存大小的区块，每种都为8的倍数，最小为8字节，最大为128字节。这个free_list其实并不是链表，而是一个16个元素大小的数组，数组元素类型是obj * （每个元素指向一个链表的头结点），而obj的结构如下：
 
-{% highlight C++ %}
+```C++
 union obj {
     union obj *free_list_link;
     char client_data[1];
 };
-{% endhighlight %}
+```
 
 这个节点结构非常精巧，节点的第一种字段是指向下一个obj的指针，而第二个字段则是指向真正的用户内存块。也就是说这种节点是一物二用，在内存还未分配给用户时通过第一个字段将这些取自内存池的相同大小的内存块一一链接起来形成一个链表；在分配出去之后，用户则直接可以通过强制类型转换转成用户需要的类型。下面看一下其allocate函数吧：
 
-{% highlight C++ %}
+```C++
 //获取free_list的对应下标以适应用户申请的内存块大小  
 static  size_t _S_freelist_index(size_t __bytes) {
         return (((__bytes) + (size_t)_ALIGN-1)/(size_t)_ALIGN - 1);
@@ -168,11 +168,11 @@ static  size_t _S_freelist_index(size_t __bytes) {
 
     return __ret;
   };
-{% endhighlight %}
+```
 
 关键就在于上述函数中的_S_refill函数，这个函数会默认从内存池中默认取20个n字节的内存块，然后再将它们通过obj中的free_list_link字段一一链接起来，实现如下代码段所示，
 
-{% highlight C++ %}
+```C++
 /* Returns an object of size __n, and optionally adds to size __n free list.*/
 /* We assume that __n is properly aligned.                                */
 /* We hold the allocation lock.                                         */
@@ -206,11 +206,11 @@ __default_alloc_template<__threads, __inst>::_S_refill(size_t __n)
       }
     return(__result);
 }
-{% endhighlight %}
+```
 
 而这个内存池到底是个什么东西呢，其实在这个第二级配置器中维护了三个指针：
 
-{% highlight C++ %}
+```C++
   // Chunk allocation state.
   static char* _S_start_free;//内存池起始位置
   static char* _S_end_free;//内存池结束位置
@@ -225,11 +225,12 @@ char* __default_alloc_template<__threads, __inst>::_S_end_free = 0;
 
 template <bool __threads, int __inst>
 size_t __default_alloc_template<__threads, __inst>::_S_heap_size = 0;
-{% endhighlight %}
 
-而真正从内存池中取指定大小的内存则是通过 _S_chunk_alloc函数：
+```
 
-{% highlight C++ %}
+而真正从内存池中取指定大小的内存则是通过 _S_chunk_alloc函数:
+
+```C++
 /* We allocate memory in large chunks in order to avoid fragmenting     */
 /* the malloc heap too much.                                            */
 /* We assume that size is properly aligned.                             */
@@ -301,7 +302,7 @@ __default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size,
         return(_S_chunk_alloc(__size, __nobjs));
     }
 }
-{% endhighlight %}
+```
 
 至此，整个STL内存配置器的主要过程就分析完毕，可以看见内存管理永远是最复杂的模块之一，要想尽一切方法，不能让任何一块内存浪费掉~
 

@@ -4,7 +4,7 @@ title: Kafka和RocketMQ文件存储机制对比
 description: "The file system of kafka and rocketmq"
 modified: 2019-09-02
 tags: [Kafka, RocketMQ]
-categories: [Kafka, RocketMQ]
+categories: [Distributed Systems]
 ---
 
 

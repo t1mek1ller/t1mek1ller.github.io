@@ -4,7 +4,7 @@ title: 利用Jekyll和Github搭建博客
 description: "利用Jekyll和Github搭建博客"
 modified: 2014-04-15
 tags: [Jekyll, Github]
-categories: [Jekyll]
+categories: [Blog]
 ---
 
 目前的博客系统多的数不胜数，眼花缭乱。用的最多的wordpress虽然方便，但总觉得过于臃肿不堪，关键是自己找免费的服务器(sae, bae, openshift, etc.)很是麻烦，自己的博客数据也不可控制。

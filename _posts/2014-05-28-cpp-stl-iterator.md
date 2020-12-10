@@ -4,7 +4,7 @@ title: STL之迭代器
 description: "STL之迭代器"
 modified: 2014-05-28
 tags: [C++, STL]
-categories: [C++, STL]
+categories: [C++]
 ---
 
 除了[STL内存配置](http://atimekiller.github.io/cpp-stl-memory-management/)之外，我认为理解STL迭代器对理解STL的设计思想具有重大帮助，而且也能更高效的利用好STL。迭代器，其实就是行为类似指针的一种对象，是指针的更高一级的抽象和包装，它可以访问容器中的元素，更关键的是它将容器和算法有机统一起来，是泛型编程的绝好体现。下面总结一下STL迭代器的实现技术：

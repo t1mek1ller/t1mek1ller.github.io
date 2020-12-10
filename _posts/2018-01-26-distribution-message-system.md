@@ -4,7 +4,7 @@ title: 分布式消息系统的若干问题
 description: "分布式消息系统"
 modified: 2018-01-26
 tags: [RocketMQ, Kafka]
-categories: [RocketMQ, Kafka, Distribution]
+categories: [Distributed Systems]
 ---
 
 分布式消息系统，简单来说是实现消息的发布和订阅功能，可以实现系统间解耦、异步通信、分布式事务等功能，是现代大规模系统的重要组成部分。
