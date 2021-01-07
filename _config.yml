@@ -4,8 +4,8 @@
 baseurl: 
 url: https://t1mek1ller.github.io
 date_format: "ordinal"
-title: YELLOW J
-author: YELLOW J
+title: YELLOW's BLOG
+author: YELLOW'S BLOG
 
 # ---------------- #
 #   RSS / Email    #
@@ -30,7 +30,7 @@ collections:
     wiki:
         output: true
         permalink: /wiki/:path/
-paginate: 100
+paginate: 5
 # ---------------- #
 #      Comments    #
 # ---------------- #

@@ -16,7 +16,7 @@ categories: [Distributed Systems]
 
 ## 副本策略（ISRs）
 
-Kakfa的副本策略称为ISRs(in-sync replicas)，动态维护了一个包含所有已提交日志的节点集合，通过zookeeper存储该集合，并由zookeeper从集合中选出一个节点作为leader，日志会先写入到leader，再由ISRs中的其他follower节点主动进行复制同步。
+Kafka的副本策略称为ISRs(in-sync replicas)，动态维护了一个包含所有已提交日志的节点集合，通过zookeeper存储该集合，并由zookeeper从集合中选出一个节点作为leader，日志会先写入到leader，再由ISRs中的其他follower节点主动进行复制同步。
 
 关于为什么Kafka没有采用类似Raft、Paxos的Quorum算法，官方文档也做了说明：
 
